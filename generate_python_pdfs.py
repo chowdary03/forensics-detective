@@ -165,7 +165,7 @@ def main():
     print()
     
     # Generate Python PDFs
-    successful, failed = generate_python_pdfs(max_files=100)  # Start with subset
+    successful, failed = generate_python_pdfs(max_files=5000)  # Start with subset
     
     if successful > 0:
         print(f"\nNext step: Convert Python PDFs to binary images")

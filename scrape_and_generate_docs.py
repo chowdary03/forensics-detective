@@ -128,6 +128,6 @@ while generated_docs < NUM_DOCS:
     i += 1
     generated_docs += 1
     if generated_docs % 50 == 0:
-        print(f"✅ Generated {generated_docs}/{NUM_DOCS} documents...")
+        print(f" Generated {generated_docs}/{NUM_DOCS} documents...")
 
-print(f"\n✅ Completed generating {NUM_DOCS} real Wikipedia DOCX documents in '{OUTPUT_FOLDER}/'")
+print(f"\n Completed generating {NUM_DOCS} real Wikipedia DOCX documents in '{OUTPUT_FOLDER}/'")

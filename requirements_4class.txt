@@ -1,0 +1,6 @@
+numpy
+pillow
+scikit-learn
+# For Linux/Windows/Intel macOS
+tensorflow
+# For Apple Silicon (M1/M2/M3) macOS

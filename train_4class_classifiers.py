@@ -37,7 +37,9 @@ from sklearn.metrics import (
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.linear_model import SGDClassifier
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
+from sklearn.decomposition import PCA
+from sklearn.pipeline import Pipeline
 from sklearn.utils.class_weight import compute_class_weight
 
 import tensorflow as tf
@@ -350,15 +352,38 @@ def main() -> None:
     y_pred_rf = rf_search.best_estimator_.predict(X_te)
     evaluate_classifier("RandomForest", y_te, y_pred_rf)
 
-    # 4) GradientBoosting with randomized search
-    print("\n=== Tuning GradientBoosting (RandomizedSearchCV, cv=5, scoring=f1_macro) ===")
-    gb = GradientBoostingClassifier(random_state=42)
-    gb_dist = { 'n_estimators': [100, 200, 300], 'learning_rate': [0.05, 0.1, 0.2], 'max_depth': [2, 3] }
-    gb_search = RandomizedSearchCV(gb, gb_dist, n_iter=8, scoring='f1_macro', cv=5, n_jobs=-1, random_state=42, verbose=1)
-    gb_search.fit(X_tr, y_tr)
-    print(f"Best GB params: {gb_search.best_params_}")
-    y_pred_gb = gb_search.best_estimator_.predict(X_te)
-    evaluate_classifier("GradientBoosting", y_te, y_pred_gb)
+    # 4) Fast HistGradientBoosting with PCA and early stopping
+    print("\n=== Tuning HistGradientBoosting + PCA (RandomizedSearchCV, cv=3, scoring=f1_macro) ===")
+    hgb_pipe = Pipeline([
+        ('pca', PCA(n_components=256, random_state=42)),
+        ('hgb', HistGradientBoostingClassifier(
+            early_stopping=True,
+            validation_fraction=0.1,
+            random_state=42,
+        )),
+    ])
+    hgb_dist = {
+        'pca__n_components': [128, 256],
+        'hgb__learning_rate': [0.05, 0.1],
+        'hgb__max_leaf_nodes': [15, 31],
+        'hgb__max_iter': [80, 120, 160],
+        'hgb__l2_regularization': [0.0, 1e-4, 1e-3],
+        'hgb__min_samples_leaf': [20, 50],
+    }
+    hgb_search = RandomizedSearchCV(
+        hgb_pipe,
+        hgb_dist,
+        n_iter=6,
+        scoring='f1_macro',
+        cv=3,
+        n_jobs=-1,
+        random_state=42,
+        verbose=1,
+    )
+    hgb_search.fit(X_tr, y_tr)
+    print(f"Best HGB params: {hgb_search.best_params_}")
+    y_pred_hgb = hgb_search.best_estimator_.predict(X_te)
+    evaluate_classifier("HistGradientBoosting+PCA", y_te, y_pred_hgb)
 
     # 5) CNN: compact forensic-focused model with small hyperparam search
     print("\n=== Training CNN (separable + high-pass, with tuning) ===")

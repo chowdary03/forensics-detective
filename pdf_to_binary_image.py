@@ -96,6 +96,9 @@ def main():
     print("\n=== Converting LibreOffice-generated PDFs ===")
     convert_pdf_directory('lo_pdfs', 'lo_pdfs_png')
     
+    print("\n=== Converting Browser-generated PDFs ===")
+    convert_pdf_directory('fifth_pdfs', 'fifth_pdfs_png')
+    
     print("\nConversion complete!")
 
 if __name__ == "__main__":

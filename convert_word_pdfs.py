@@ -4,7 +4,7 @@ from pathlib import Path
 from tqdm import tqdm
 
 input_folder = Path("wikipedia_docs")
-output_folder = Path("word_pdfs")
+output_folder = Path("libreoffice_pdfs")
 output_folder.mkdir(exist_ok=True)
 
 word_files = list(input_folder.glob("*.docx"))

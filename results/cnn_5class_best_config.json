@@ -1,0 +1,6 @@
+{
+  "val_accuracy": 0.887499988079071,
+  "config": {
+    "base_filters": 32
+  }
+}

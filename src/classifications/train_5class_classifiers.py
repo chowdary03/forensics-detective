@@ -48,14 +48,13 @@ from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from keras import Sequential
 from keras.layers import (
     Input, Conv2D, MaxPooling2D, Dropout, Dense, BatchNormalization,
-    RandomFlip, RandomRotation, RandomZoom, RandomTranslation, RandomContrast,
-    SeparableConv2D, GlobalAveragePooling2D
+    GlobalAveragePooling2D
 )
 from keras.optimizers import Adam
 from keras.regularizers import l2
 from keras.losses import SparseCategoricalCrossentropy
 
-def load_4class_dataset(
+def load_5class_dataset(
     word_dir: str = 'data/converted_pngs/word_pdfs_png',
     google_dir: str = 'data/converted_pngs/google_docs_pdfs_png',
     python_dir: str = 'data/converted_pngs/python_pdfs_png',
@@ -66,7 +65,7 @@ def load_4class_dataset(
     target_size: Tuple[int, int] = (200, 200),
 ) -> Tuple[np.ndarray, np.ndarray, Tuple[int, int]]:
     """
-    Load 4-class binary image dataset.
+    Load 5-class binary image dataset.
 
     Returns:
         X (N, H*W): Flattened grayscale images for classical models
@@ -158,85 +157,51 @@ def tune_and_train_sgd(X_train: np.ndarray, y_train: np.ndarray) -> RandomizedSe
 
 def build_cnn(
     input_shape: Tuple[int, int, int],
-    num_classes: int = 4,
+    num_classes: int = 5,
     *,
     base_filters: int = 32,
     weight_decay: float = 1e-4,
     dropout_dense: float = 0.4,
     learning_rate: float = 1e-3,
-    use_highpass: bool = True,
-    label_smoothing: float = 0.05,
 ):
     """
-    Compact separable-conv CNN with optional fixed high-pass residual prefilter,
-    lightweight augmentations, L2 regularization, label smoothing, and GAP head.
+    Simple CNN for PDF classification with basic conv layers.
     """
-    layers = [
+    model = Sequential([
         Input(shape=input_shape),
-        # Light augmentations appropriate for document forensics
-        RandomFlip("horizontal"),
-        RandomRotation(0.02),
-        RandomTranslation(0.02, 0.02),
-        RandomZoom(0.05, 0.05),
-        RandomContrast(0.1),
-    ]
-
-    if use_highpass:
-        # 5x5 high-pass residual kernel (sum ~ 0) to emphasize subtle rendering noise
-        hp_kernel = np.array([
-            [0, 0, -1, 0, 0],
-            [0, -1, 2, -1, 0],
-            [-1, 2, 4, 2, -1],
-            [0, -1, 2, -1, 0],
-            [0, 0, -1, 0, 0],
-        ], dtype=np.float32)
-        hp_kernel = hp_kernel / max(1.0, float(np.sum(np.abs(hp_kernel))))
-        hp_kernel = hp_kernel.reshape((5, 5, 1, 1))
-        layers.extend([
-            Conv2D(
-                1, (5, 5), padding='same', use_bias=False,
-                kernel_initializer=tf.constant_initializer(hp_kernel),
-                trainable=False,
-            ),
-            BatchNormalization(),
-        ])
-
-    # SeparableConv blocks
-    def sep_block(filters: int, pool: bool, dropout_rate: float):
-        block = [
-            SeparableConv2D(filters, (3, 3), padding='same', activation='relu',
-                            depthwise_regularizer=l2(weight_decay), pointwise_regularizer=l2(weight_decay)),
-            BatchNormalization(),
-            SeparableConv2D(filters, (3, 3), padding='same', activation='relu',
-                            depthwise_regularizer=l2(weight_decay), pointwise_regularizer=l2(weight_decay)),
-            BatchNormalization(),
-        ]
-        if pool:
-            block.append(MaxPooling2D((2, 2)))
-        block.append(Dropout(dropout_rate))
-        return block
-
-    layers.extend(sep_block(base_filters, pool=True, dropout_rate=0.15))
-    layers.extend(sep_block(base_filters * 2, pool=True, dropout_rate=0.25))
-    layers.extend([
-        SeparableConv2D(base_filters * 3, (3, 3), padding='same', activation='relu',
-                        depthwise_regularizer=l2(weight_decay), pointwise_regularizer=l2(weight_decay)),
+        
+        # Larger kernels for binary patterns
+        Conv2D(base_filters, (5, 5), activation='relu', padding='same'),
+        BatchNormalization(),
+        Conv2D(base_filters, (5, 5), activation='relu', padding='same'),
+        MaxPooling2D((2, 2)),
+        Dropout(0.2),
+        
+        # Second conv block
+        Conv2D(base_filters * 2, (5, 5), activation='relu', padding='same'),
+        BatchNormalization(),
+        Conv2D(base_filters * 2, (5, 5), activation='relu', padding='same'),
+        MaxPooling2D((2, 2)),
+        Dropout(0.2),
+        
+        # Third conv block
+        Conv2D(base_filters * 4, (3, 3), activation='relu', padding='same'),
         BatchNormalization(),
         MaxPooling2D((2, 2)),
-        Dropout(0.35),
-    ])
-
-    layers.extend([
+        Dropout(0.3),
+        
+        # Dense layers
         GlobalAveragePooling2D(),
-        Dense(128, activation='relu', kernel_regularizer=l2(weight_decay)),
-        Dropout(dropout_dense),
+        Dense(256, activation='relu'),  # Increased capacity
+        Dropout(0.4),
+        Dense(128, activation='relu'),
+        Dropout(0.3),
         Dense(num_classes, activation='softmax'),
     ])
 
-    model = Sequential(layers)
     model.compile(
         optimizer=Adam(learning_rate=learning_rate),
-        loss=SparseCategoricalCrossentropy(label_smoothing=label_smoothing),
+        loss=SparseCategoricalCrossentropy(),
         metrics=['accuracy']
     )
     return model
@@ -253,45 +218,37 @@ def train_and_select_cnn(
     """
     H, W = input_hw
     input_shape = (H, W, 1)
-    configs = [
-        {"base_filters": 32, "weight_decay": 1e-4, "dropout_dense": 0.4, "learning_rate": 1e-3},
-        {"base_filters": 48, "weight_decay": 5e-4, "dropout_dense": 0.45, "learning_rate": 7e-4},
-        {"base_filters": 64, "weight_decay": 1e-4, "dropout_dense": 0.5, "learning_rate": 5e-4},
-    ]
+    # More patient early stopping for CNN
+    es = EarlyStopping(monitor='val_accuracy', patience=8, restore_best_weights=True)
+    rlrop = ReduceLROnPlateau(monitor='val_accuracy', factor=0.7, patience=3, min_lr=1e-6)
 
-    best_val_acc = -1.0
-    best_model = None
-    best_cfg = None
-
-    es = EarlyStopping(monitor='val_accuracy', patience=6, restore_best_weights=True)
-    rlrop = ReduceLROnPlateau(monitor='val_accuracy', factor=0.5, patience=2, min_lr=1e-5)
-
-    for cfg in configs:
-        model = build_cnn(
-            input_shape,
-            num_classes=4,
-            base_filters=cfg["base_filters"],
-            weight_decay=cfg["weight_decay"],
-            dropout_dense=cfg["dropout_dense"],
-            learning_rate=cfg["learning_rate"],
-            use_highpass=True,
-        )
-        history = model.fit(
-            X_tr_img, y_tr,
-            validation_split=0.12,
-            epochs=60,
-            batch_size=128,
-            callbacks=[es, rlrop],
-            verbose=0,
-            class_weight=class_weights,
-        )
-        val_acc = max(history.history.get('val_accuracy', [0.0]))
-        if val_acc > best_val_acc:
-            best_val_acc = val_acc
-            best_model = model
-            best_cfg = cfg
-
-    return best_model, {"val_accuracy": float(best_val_acc), "config": best_cfg}
+    model = build_cnn(
+        input_shape,
+        num_classes=5,
+        base_filters=32,
+        weight_decay=1e-4,
+        dropout_dense=0.4,
+        learning_rate=1e-3,
+    )
+    
+    print("Training CNN...")
+    print(f"Training data shape: {X_tr_img.shape}")
+    print(f"Training labels shape: {y_tr.shape}")
+    print(f"Class distribution: {np.bincount(y_tr)}")
+    
+    history = model.fit(
+        X_tr_img, y_tr,
+        validation_split=0.2,
+        epochs=50,  # More epochs to allow proper convergence
+        batch_size=16,  # Smaller batch for better gradient updates
+        callbacks=[es, rlrop],
+        verbose=1,  # Show progress
+        class_weight=class_weights,
+    )
+    
+    val_acc = max(history.history.get('val_accuracy', [0.0]))
+    print(f"CNN Best Validation Accuracy: {val_acc:.4f}")
+    return model, {"val_accuracy": float(val_acc), "config": {"base_filters": 32}}
 
 
 def evaluate_classifier(name: str, y_true: np.ndarray, y_pred: np.ndarray) -> None:
@@ -317,8 +274,8 @@ def main() -> None:
     # Collect performance metrics across models
     metrics_rows = []
 
-    # Load combined 4-class dataset
-    X, y, hw = load_4class_dataset(max_samples_per_class=None, target_size=(200, 200))
+    # Load combined 5-class dataset
+    X, y, hw = load_5class_dataset(max_samples_per_class=None, target_size=(200, 200))
 
     # Use a single index-based split, so CNN can use raw pixels and SVM/SGD scaled features
     idx = np.arange(len(y))
@@ -425,7 +382,7 @@ def main() -> None:
     metrics_rows.append(["HistGradientBoosting+PCA", f"{acc:.6f}", f"{prec:.6f}", f"{rec:.6f}", f"{f1:.6f}"])
 
     # 5) CNN: compact forensic-focused model with small hyperparam search
-    print("\n=== Training CNN (separable + high-pass, with tuning) ===")
+    print("\n=== Training CNN (separable")
     # Reproducibility
     np.random.seed(42)
     random.seed(42)
@@ -435,8 +392,15 @@ def main() -> None:
         pass
 
     H, W = hw
+    # Simple normalization for binary data
     X_tr_img = (X[tr_idx].reshape((-1, H, W, 1)) / 255.0).astype(np.float32)
     X_te_img = (X[te_idx].reshape((-1, H, W, 1)) / 255.0).astype(np.float32)
+    
+    # Standardize the data (mean=0, std=1) for better CNN training
+    mean_val = np.mean(X_tr_img)
+    std_val = np.std(X_tr_img)
+    X_tr_img = (X_tr_img - mean_val) / (std_val + 1e-8)
+    X_te_img = (X_te_img - mean_val) / (std_val + 1e-8)
 
     # Class weights to mitigate imbalance
     classes = np.unique(y_tr)

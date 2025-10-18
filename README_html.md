@@ -3,7 +3,7 @@
 This source converts existing `wikipedia_docs/*.docx` to HTML and renders them to PDF using a headless browser (Chromium) via Playwright's print-to-PDF. This ensures identical content with other sources and high reproducibility.
 
 Run (no flags):
-- python fifth_browser/generate_browser_pdfs.py
+- python fifth_browser/generate_htmml_pdfs.py
 
 Outputs:
 - fifth_html/ — intermediate HTML (saved per document)
@@ -11,7 +11,7 @@ Outputs:
 
 Install:
 - python3 -m venv .venv && source .venv/bin/activate
-- pip install -r fifth_browser/requirements.txt
+- pip install -r requirements.txt
 - python -m playwright install chromium
 
 Notes:

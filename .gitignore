@@ -40,6 +40,10 @@ MANIFEST
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
+ 
+ credentials_oauth.json
+ google_credentials.json
+ token.pkl
 
 # Unit test / coverage reports
 htmlcov/

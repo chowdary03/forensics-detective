@@ -60,7 +60,7 @@ def load_4class_dataset(
     google_dir: str = 'data/converted_pngs/google_docs_pdfs_png',
     python_dir: str = 'data/converted_pngs/python_pdfs_png',
     libreoffice_dir: str = 'data/converted_pngs/libreoffice_pdfs_png',
-    browser_dir: str = 'html_pdfs_png',
+    browser_dir: str = 'data/converted_pngs/html_pdfs_png',
     *,
     max_samples_per_class: int = None,
     target_size: Tuple[int, int] = (200, 200),

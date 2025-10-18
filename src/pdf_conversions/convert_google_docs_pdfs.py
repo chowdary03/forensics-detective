@@ -21,8 +21,8 @@ MAX_RETRIES = 2
 # Folders
 DOCX_FOLDER = Path("data/source_documents/wikipedia_docs")
 PDF_FOLDER = Path("data/google_docs_pdfs")
-TOKEN_FILE = Path("token.pkl")
-CREDENTIALS_FILE = Path("credentials_oauth.json")
+TOKEN_FILE = Path("src/utils/token.pkl")
+CREDENTIALS_FILE = Path("src/utils/credentials_oauth.json")
 
 
 def authenticate_oauth():

@@ -20,7 +20,7 @@ import wikipedia
 
 # --- Configurations ---
 OUTPUT_FOLDER = "data/source_documents/wikipedia_docs"
-IMAGES_FOLDER = "sample_images"
+IMAGES_FOLDER = "src/utils/sample_images"
 NUM_DOCS = 5000
 TOPICS = [
     "Mathematics", "Physics", "Computer_science", "Engineering",

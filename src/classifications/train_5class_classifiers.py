@@ -19,6 +19,7 @@ Implementation requirements satisfied:
 """
 
 import os
+import csv
 import time
 import pickle
 import json
@@ -55,11 +56,11 @@ from keras.regularizers import l2
 from keras.losses import SparseCategoricalCrossentropy
 
 def load_4class_dataset(
-    word_dir: str = 'word_pdfs_png',
-    google_dir: str = 'google_docs_pdfs_png',
-    python_dir: str = 'python_pdfs_png',
-    libreoffice_dir: str = 'lo_pdfs_png',
-    browser_dir: str = 'fifth_pdfs_png',
+    word_dir: str = 'data/converted_pngs/word_pdfs_png',
+    google_dir: str = 'data/converted_pngs/google_docs_pdfs_png',
+    python_dir: str = 'data/converted_pngs/python_pdfs_png',
+    libreoffice_dir: str = 'data/converted_pngs/libreoffice_pdfs_png',
+    browser_dir: str = 'html_pdfs_png',
     *,
     max_samples_per_class: int = None,
     target_size: Tuple[int, int] = (200, 200),
@@ -310,6 +311,12 @@ def main() -> None:
     print("Classes: Word (0), Google Docs (1), Python/ReportLab (2), LibreOffice (3), Browser (4)")
     print("=" * 60)
 
+    # Ensure results directories exist
+    os.makedirs('results/confusion_matrices', exist_ok=True)
+
+    # Collect performance metrics across models
+    metrics_rows = []
+
     # Load combined 4-class dataset
     X, y, hw = load_4class_dataset(max_samples_per_class=None, target_size=(200, 200))
 
@@ -332,6 +339,14 @@ def main() -> None:
     print(f"SVM tuning time: {time.time()-t0:.2f}s")
     y_pred_svm = svm_search.best_estimator_.predict(X_te)
     evaluate_classifier("SVM", y_te, y_pred_svm)
+    # Save confusion matrix and metrics for SVM
+    cm = confusion_matrix(y_te, y_pred_svm)
+    with open('results/confusion_matrices/svm.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerows(cm)
+    acc = accuracy_score(y_te, y_pred_svm)
+    prec, rec, f1, _ = precision_recall_fscore_support(y_te, y_pred_svm, average='macro', zero_division=0)
+    metrics_rows.append(["SVM", f"{acc:.6f}", f"{prec:.6f}", f"{rec:.6f}", f"{f1:.6f}"])
 
     # 2) SGD with randomized search and 5-fold CV
     print("\n=== Tuning SGD (RandomizedSearchCV, cv=5, scoring=f1_macro) ===")
@@ -341,6 +356,14 @@ def main() -> None:
     print(f"SGD tuning time: {time.time()-t0:.2f}s")
     y_pred_sgd = sgd_search.best_estimator_.predict(X_te)
     evaluate_classifier("SGD", y_te, y_pred_sgd)
+    # Save confusion matrix and metrics for SGD
+    cm = confusion_matrix(y_te, y_pred_sgd)
+    with open('results/confusion_matrices/sgd.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerows(cm)
+    acc = accuracy_score(y_te, y_pred_sgd)
+    prec, rec, f1, _ = precision_recall_fscore_support(y_te, y_pred_sgd, average='macro', zero_division=0)
+    metrics_rows.append(["SGD", f"{acc:.6f}", f"{prec:.6f}", f"{rec:.6f}", f"{f1:.6f}"])
 
     # 3) RandomForest with grid search
     print("\n=== Tuning RandomForest (GridSearchCV, cv=5, scoring=f1_macro) ===")
@@ -351,6 +374,14 @@ def main() -> None:
     print(f"Best RF params: {rf_search.best_params_}")
     y_pred_rf = rf_search.best_estimator_.predict(X_te)
     evaluate_classifier("RandomForest", y_te, y_pred_rf)
+    # Save confusion matrix and metrics for RandomForest
+    cm = confusion_matrix(y_te, y_pred_rf)
+    with open('results/confusion_matrices/random_forest.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerows(cm)
+    acc = accuracy_score(y_te, y_pred_rf)
+    prec, rec, f1, _ = precision_recall_fscore_support(y_te, y_pred_rf, average='macro', zero_division=0)
+    metrics_rows.append(["RandomForest", f"{acc:.6f}", f"{prec:.6f}", f"{rec:.6f}", f"{f1:.6f}"])
 
     # 4) Fast HistGradientBoosting with PCA and early stopping
     print("\n=== Tuning HistGradientBoosting + PCA (RandomizedSearchCV, cv=3, scoring=f1_macro) ===")
@@ -384,6 +415,14 @@ def main() -> None:
     print(f"Best HGB params: {hgb_search.best_params_}")
     y_pred_hgb = hgb_search.best_estimator_.predict(X_te)
     evaluate_classifier("HistGradientBoosting+PCA", y_te, y_pred_hgb)
+    # Save confusion matrix and metrics for HistGradientBoosting+PCA
+    cm = confusion_matrix(y_te, y_pred_hgb)
+    with open('results/confusion_matrices/hist_gradient_boosting_pca.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerows(cm)
+    acc = accuracy_score(y_te, y_pred_hgb)
+    prec, rec, f1, _ = precision_recall_fscore_support(y_te, y_pred_hgb, average='macro', zero_division=0)
+    metrics_rows.append(["HistGradientBoosting+PCA", f"{acc:.6f}", f"{prec:.6f}", f"{rec:.6f}", f"{f1:.6f}"])
 
     # 5) CNN: compact forensic-focused model with small hyperparam search
     print("\n=== Training CNN (separable + high-pass, with tuning) ===")
@@ -410,30 +449,44 @@ def main() -> None:
     print(f"CNN tuning+train time: {time.time()-t0:.2f}s")
     y_pred_cnn = np.argmax(cnn.predict(X_te_img, verbose=0), axis=1)
     evaluate_classifier("CNN", y_te, y_pred_cnn)
+    # Save confusion matrix and metrics for CNN
+    cm = confusion_matrix(y_te, y_pred_cnn)
+    with open('results/confusion_matrices/cnn.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerows(cm)
+    acc = accuracy_score(y_te, y_pred_cnn)
+    prec, rec, f1, _ = precision_recall_fscore_support(y_te, y_pred_cnn, average='macro', zero_division=0)
+    metrics_rows.append(["CNN", f"{acc:.6f}", f"{prec:.6f}", f"{rec:.6f}", f"{f1:.6f}"])
 
     # Save models, scaler, and confusion matrices
     print("\nSaving trained models and results...")
-    with open('svm_5class_model.pkl', 'wb') as f:
+    with open('results/svm_5class_model.pkl', 'wb') as f:
         pickle.dump(svm_search.best_estimator_, f)
-    with open('sgd_5class_model.pkl', 'wb') as f:
+    with open('results/sgd_5class_model.pkl', 'wb') as f:
         pickle.dump(sgd_search.best_estimator_, f)
     # Save CNN and its best config
     try:
-        cnn.save('cnn_5class_model.h5')
+        cnn.save('results/cnn_5class_model.h5')
     except Exception as e:
         print(f"Warning: Could not save CNN model as .h5: {e}")
     try:
-        with open('cnn_5class_best_config.json', 'w') as f:
+        with open('results/cnn_5class_best_config.json', 'w') as f:
             json.dump(cnn_meta, f, indent=2)
     except Exception as e:
         print(f"Warning: Could not save CNN config json: {e}")
-    with open('scaler_5class.pkl', 'wb') as f:
+    with open('results/scaler_5class.pkl', 'wb') as f:
         pickle.dump(scaler, f)
     try:
-        cnn.save('cnn_5class_model.keras')
+        cnn.save('results/cnn_5class_model.keras')
     except Exception:
         pass
     print("Models saved.")
+
+    # Write performance metrics CSV
+    with open('results/performance_metrics.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(["model", "accuracy", "precision_macro", "recall_macro", "f1_macro"])
+        writer.writerows(metrics_rows)
 
 
 if __name__ == "__main__":

@@ -11,8 +11,8 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 import matplotlib.pyplot as plt
 
-def create_side_by_side_comparison(word_dir='word_pdfs_png', google_dir='google_docs_pdfs_png', 
-                                 python_dir='python_pdfs_png', output_dir='comparison_images',
+def create_side_by_side_comparison(word_dir='data/converted_pngs/word_pdfs_png', google_dir='data/converted_pngs/google_docs_pdfs_png', 
+                                 python_dir='data/converted_pngs/python_pdfs_png', libreoffice_dir='data/converted_pngs/libreoffice_pdfs_png', html_dir='data/converted_pngs/html_pdfs_png', output_dir='results/comparison_images',
                                  num_comparisons=10):
     """
     Create side-by-side comparisons of the same document across all three generation methods.
@@ -29,13 +29,15 @@ def create_side_by_side_comparison(word_dir='word_pdfs_png', google_dir='google_
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
-    # Get common files across all three directories
+    # Get common files across all five directories
     word_files = set([f.replace('.png', '') for f in os.listdir(word_dir) if f.endswith('.png')])
     google_files = set([f.replace('.png', '') for f in os.listdir(google_dir) if f.endswith('.png')])
     python_files = set([f.replace('.png', '') for f in os.listdir(python_dir) if f.endswith('.png')])
+    libreoffice_files = set([f.replace('.png', '') for f in os.listdir(libreoffice_dir) if f.endswith('.png')])
+    html_files = set([f.replace('.png', '') for f in os.listdir(html_dir) if f.endswith('.png')])
     
-    # Find files that exist in all three directories
-    common_files = list(word_files & google_files & python_files)
+    # Find files that exist in all five directories
+    common_files = list(word_files & google_files & python_files & libreoffice_files & html_files)
     
     print(f"Found {len(common_files)} files common to all three PDF types")
     
@@ -46,19 +48,25 @@ def create_side_by_side_comparison(word_dir='word_pdfs_png', google_dir='google_
     
     for i, base_filename in enumerate(common_files, 1):
         try:
-            # Load the three images
+            # Load the five images
             word_path = os.path.join(word_dir, f"{base_filename}.png")
             google_path = os.path.join(google_dir, f"{base_filename}.png")
             python_path = os.path.join(python_dir, f"{base_filename}.png")
+            libreoffice_path = os.path.join(libreoffice_dir, f"{base_filename}.png")
+            html_path = os.path.join(html_dir, f"{base_filename}.png")
             
             word_img = Image.open(word_path).convert('RGB')
             google_img = Image.open(google_path).convert('RGB')
             python_img = Image.open(python_path).convert('RGB')
+            libreoffice_img = Image.open(libreoffice_path).convert('RGB')
+            html_img = Image.open(html_path).convert('RGB')
             
             # Get original dimensions for labels
             word_dims = f"{word_img.size[0]}x{word_img.size[1]}"
             google_dims = f"{google_img.size[0]}x{google_img.size[1]}"
             python_dims = f"{python_img.size[0]}x{python_img.size[1]}"
+            libreoffice_dims = f"{libreoffice_img.size[0]}x{libreoffice_img.size[1]}"
+            html_dims = f"{html_img.size[0]}x{html_img.size[1]}"
             
             # Resize all to same height for comparison (keep aspect ratio)
             target_height = 300
@@ -66,15 +74,26 @@ def create_side_by_side_comparison(word_dir='word_pdfs_png', google_dir='google_
             word_ratio = target_height / word_img.size[1]
             google_ratio = target_height / google_img.size[1]
             python_ratio = target_height / python_img.size[1]
+            libreoffice_ratio = target_height / libreoffice_img.size[1]
+            html_ratio = target_height / html_img.size[1]
             
             word_resized = word_img.resize((int(word_img.size[0] * word_ratio), target_height), Image.LANCZOS)
             google_resized = google_img.resize((int(google_img.size[0] * google_ratio), target_height), Image.LANCZOS)
             python_resized = python_img.resize((int(python_img.size[0] * python_ratio), target_height), Image.LANCZOS)
+            libreoffice_resized = libreoffice_img.resize((int(libreoffice_img.size[0] * libreoffice_ratio), target_height), Image.LANCZOS)
+            html_resized = html_img.resize((int(html_img.size[0] * html_ratio), target_height), Image.LANCZOS)
             
             # Create comparison image
             padding = 20
             label_height = 30
-            total_width = word_resized.size[0] + google_resized.size[0] + python_resized.size[0] + 4 * padding
+            total_width = (
+                word_resized.size[0]
+                + google_resized.size[0]
+                + python_resized.size[0]
+                + libreoffice_resized.size[0]
+                + html_resized.size[0]
+                + 6 * padding
+            )
             total_height = target_height + label_height + 2 * padding
             
             comparison = Image.new('RGB', (total_width, total_height), 'white')
@@ -86,6 +105,10 @@ def create_side_by_side_comparison(word_dir='word_pdfs_png', google_dir='google_
             comparison.paste(google_resized, (x_offset, padding + label_height))
             x_offset += google_resized.size[0] + padding
             comparison.paste(python_resized, (x_offset, padding + label_height))
+            x_offset += python_resized.size[0] + padding
+            comparison.paste(libreoffice_resized, (x_offset, padding + label_height))
+            x_offset += libreoffice_resized.size[0] + padding
+            comparison.paste(html_resized, (x_offset, padding + label_height))
             
             # Add labels
             draw = ImageDraw.Draw(comparison)
@@ -101,6 +124,10 @@ def create_side_by_side_comparison(word_dir='word_pdfs_png', google_dir='google_
             draw.text((x_offset, 5), f"Google Docs PDF\n{google_dims}", fill='black', font=font)
             x_offset += google_resized.size[0] + padding
             draw.text((x_offset, 5), f"Python PDF\n{python_dims}", fill='black', font=font)
+            x_offset += python_resized.size[0] + padding
+            draw.text((x_offset, 5), f"LibreOffice PDF\n{libreoffice_dims}", fill='black', font=font)
+            x_offset += libreoffice_resized.size[0] + padding
+            draw.text((x_offset, 5), f"HTML PDF\n{html_dims}", fill='black', font=font)
             
             # Save comparison
             output_path = os.path.join(output_dir, f"{i:02d}_{base_filename}_comparison.png")
@@ -113,8 +140,8 @@ def create_side_by_side_comparison(word_dir='word_pdfs_png', google_dir='google_
     
     print(f"\nComparison images saved to: {output_dir}/")
 
-def create_intensity_histograms(word_dir='word_pdfs_png', google_dir='google_docs_pdfs_png',
-                              python_dir='python_pdfs_png', output_dir='comparison_images',
+def create_intensity_histograms(word_dir='data/converted_pngs/word_pdfs_png', google_dir='data/converted_pngs/google_docs_pdfs_png',
+                              python_dir='data/converted_pngs/python_pdfs_png', libreoffice_dir='data/converted_pngs/libreoffice_pdfs_png', html_dir='data/converted_pngs/html_pdfs_png', output_dir='results/comparison_images',
                               num_samples=10):
     """Create histograms showing intensity distributions for each PDF type."""
     
@@ -124,11 +151,15 @@ def create_intensity_histograms(word_dir='word_pdfs_png', google_dir='google_doc
     word_files = [f for f in os.listdir(word_dir) if f.endswith('.png')][:num_samples]
     google_files = [f for f in os.listdir(google_dir) if f.endswith('.png')][:num_samples]
     python_files = [f for f in os.listdir(python_dir) if f.endswith('.png')][:num_samples]
+    libreoffice_files = [f for f in os.listdir(libreoffice_dir) if f.endswith('.png')][:num_samples]
+    html_files = [f for f in os.listdir(html_dir) if f.endswith('.png')][:num_samples]
     
     # Collect pixel intensities
     word_intensities = []
     google_intensities = []
     python_intensities = []
+    libreoffice_intensities = []
+    html_intensities = []
     
     for filename in word_files:
         img = Image.open(os.path.join(word_dir, filename)).convert('L')
@@ -142,12 +173,22 @@ def create_intensity_histograms(word_dir='word_pdfs_png', google_dir='google_doc
         img = Image.open(os.path.join(python_dir, filename)).convert('L')
         python_intensities.extend(list(np.array(img).flatten()))
     
+    for filename in libreoffice_files:
+        img = Image.open(os.path.join(libreoffice_dir, filename)).convert('L')
+        libreoffice_intensities.extend(list(np.array(img).flatten()))
+
+    for filename in html_files:
+        img = Image.open(os.path.join(html_dir, filename)).convert('L')
+        html_intensities.extend(list(np.array(img).flatten()))
+    
     # Create histogram plot
     plt.figure(figsize=(12, 6))
     
-    plt.hist(word_intensities, bins=50, alpha=0.7, label=f'Word (mean: {np.mean(word_intensities):.1f})', color='blue')
-    plt.hist(google_intensities, bins=50, alpha=0.7, label=f'Google (mean: {np.mean(google_intensities):.1f})', color='green')
-    plt.hist(python_intensities, bins=50, alpha=0.7, label=f'Python (mean: {np.mean(python_intensities):.1f})', color='red')
+    plt.hist(word_intensities, bins=50, alpha=0.6, label=f'Word (mean: {np.mean(word_intensities):.1f})', color='blue')
+    plt.hist(google_intensities, bins=50, alpha=0.6, label=f'Google (mean: {np.mean(google_intensities):.1f})', color='green')
+    plt.hist(python_intensities, bins=50, alpha=0.6, label=f'Python (mean: {np.mean(python_intensities):.1f})', color='red')
+    plt.hist(libreoffice_intensities, bins=50, alpha=0.6, label=f'LibreOffice (mean: {np.mean(libreoffice_intensities):.1f})', color='purple')
+    plt.hist(html_intensities, bins=50, alpha=0.6, label=f'HTML (mean: {np.mean(html_intensities):.1f})', color='orange')
     
     plt.xlabel('Pixel Intensity (0-255)')
     plt.ylabel('Frequency')

@@ -86,7 +86,7 @@ def create_pdf_from_text(text_content, output_path, title):
     # Build PDF
     doc.build(story)
 
-def generate_python_pdfs(docx_dir='wikipedia_docs', output_dir='python_pdfs', max_files=None):
+def generate_python_pdfs(docx_dir='data/source_documents/wikipedia_docs', output_dir='data/converted_pdfs/python_pdfs', max_files=None):
     """
     Generate Python PDFs from existing Word documents.
     

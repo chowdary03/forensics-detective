@@ -6,8 +6,8 @@ from playwright.sync_api import sync_playwright
 # Resolve paths relative to the repo root so this works from any CWD
 HERE = os.path.dirname(__file__)
 ROOT = os.path.abspath(os.path.join(HERE, '..'))
-PDF_DIR = os.path.join(ROOT, 'html_pdfs')
-DOCX_DIR = os.path.join(ROOT, 'wikipedia_docs')
+PDF_DIR = os.path.join(ROOT, 'data/html_pdfs')
+DOCX_DIR = os.path.join(ROOT, 'data/source_documents/wikipedia_docs')
 
 
 def ensure_dirs() -> None:

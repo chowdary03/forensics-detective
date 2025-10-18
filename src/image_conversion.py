@@ -85,19 +85,19 @@ def main():
     
     # Convert Word-generated PDFs
     print("=== Converting Word-generated PDFs ===")
-    convert_pdf_directory('word_pdfs', 'word_pdfs_png')
+    convert_pdf_directory('data/word_pdfs', 'data/converted_pngs/word_pdfs_png')
     
     print("\n=== Converting Google Docs-generated PDFs ===")
-    convert_pdf_directory('google_docs_pdfs', 'google_docs_pdfs_png')
+    convert_pdf_directory('data/google_docs_pdfs', 'data/converted_pngs/google_docs_pdfs_png')
     
     print("\n=== Converting Python-generated PDFs ===")
-    convert_pdf_directory('python_pdfs', 'python_pdfs_png')
+    convert_pdf_directory('data/python_pdfs', 'data/converted_pngs/python_pdfs_png')
     
     print("\n=== Converting LibreOffice-generated PDFs ===")
-    convert_pdf_directory('lo_pdfs', 'lo_pdfs_png')
+    convert_pdf_directory('data/libreoffice_pdfs', 'data/converted_pngs/libreoffice_pdfs_png')
     
     print("\n=== Converting Browser-generated PDFs ===")
-    convert_pdf_directory('fifth_pdfs', 'fifth_pdfs_png')
+    convert_pdf_directory('data/html_pdfs', 'data/converted_pngs/html_pdfs_png')
     
     print("\nConversion complete!")
 

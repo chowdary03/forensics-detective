@@ -2,7 +2,7 @@ import wikipedia
 import os
 
 # Folder to save articles
-folder = "wikipedia_docs"
+folder = "data/source_documents/wikipedia_docs"
 os.makedirs(folder, exist_ok=True)
 
 # List of topics to scrape

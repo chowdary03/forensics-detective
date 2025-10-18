@@ -19,8 +19,8 @@ NUM_WORKERS = min(4, cpu_count())  # Safe parallelism on macOS
 MAX_RETRIES = 2
 
 # Folders
-DOCX_FOLDER = Path("wikipedia_docs")
-PDF_FOLDER = Path("google_docs_pdfs")
+DOCX_FOLDER = Path("data/source_documents/wikipedia_docs")
+PDF_FOLDER = Path("data/google_docs_pdfs")
 TOKEN_FILE = Path("token.pkl")
 CREDENTIALS_FILE = Path("credentials_oauth.json")
 

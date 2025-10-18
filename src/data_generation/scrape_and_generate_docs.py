@@ -19,7 +19,7 @@ from PIL import Image as PILImage
 import wikipedia
 
 # --- Configurations ---
-OUTPUT_FOLDER = "wikipedia_docs"
+OUTPUT_FOLDER = "data/source_documents/wikipedia_docs"
 IMAGES_FOLDER = "sample_images"
 NUM_DOCS = 5000
 TOPICS = [

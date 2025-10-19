@@ -1,6 +1,6 @@
 {
-  "val_accuracy": 0.887499988079071,
+  "val_accuracy": 0.9995304942131042,
   "config": {
-    "base_filters": 32
+    "base_filters": 16
   }
 }

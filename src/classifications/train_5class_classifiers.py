@@ -62,7 +62,7 @@ def load_5class_dataset(
     browser_dir: str = 'data/converted_pngs/html_pdfs_png',
     *,
     max_samples_per_class: int = None,
-    target_size: Tuple[int, int] = (200, 200),
+    target_size: Tuple[int, int] = (100, 100),
 ) -> Tuple[np.ndarray, np.ndarray, Tuple[int, int]]:
     """
     Load 5-class binary image dataset.
@@ -275,7 +275,7 @@ def main() -> None:
     metrics_rows = []
 
     # Load combined 5-class dataset
-    X, y, hw = load_5class_dataset(max_samples_per_class=None, target_size=(200, 200))
+    X, y, hw = load_5class_dataset(max_samples_per_class=None, target_size=(100, 100))
 
     # Use a single index-based split, so CNN can use raw pixels and SVM/SGD scaled features
     idx = np.arange(len(y))

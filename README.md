@@ -15,7 +15,7 @@ This tool addresses a significant gap in current digital forensics capabilities.
 ## Project Structure
 
 ```
-ForensicsDetective/
+Assignment3_Shwetangi/
 ├── README.md                          # This file
 ├── requirements.txt                   # Python dependencies
 ├── SETUP.md                          # Setup instructions

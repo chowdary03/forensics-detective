@@ -458,10 +458,10 @@ This project is licensed under the MIT License - see the `LICENSE` file for deta
 ## Contact
 
 For questions, issues, or collaboration opportunities:
-- **Author**: Justin Del Vecchio
+- **Author**: Lahari Chowdary Talasila
 - **Project**: Forensics Detective - PDF Provenance Detection
 - **Version**: 0.2
-- **Last Updated**: September 2025
+- **Last Updated**: March 2026
 
 ---
 

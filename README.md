@@ -12,62 +12,6 @@ The project's core innovation lies in converting PDF binary structure into grays
 
 This tool addresses a significant gap in current digital forensics capabilities. While existing expert systems rely heavily on metadata analysis for document provenance, such information can be easily manipulated or stripped by sophisticated actors. The binary visualization approach operates at a deeper structural level, detecting generation signatures that are inherently embedded in the PDF creation process and resistant to simple metadata manipulation.
 
-## Project Structure
-
-```
-Assignment3_Shwetangi/
-├── README.md                          # This file
-├── requirements.txt                   # Python dependencies
-├── SETUP.md                          # Setup instructions
-├── GOOGLE_SETUP.md                   # Google API setup guide
-├── OAUTH_SETUP.md                    # OAuth authentication guide
-├── Assignment2_ForensicsDetective.pdf # Project assignment details
-│
-├── data/                             # Dataset directories
-│   ├── source_documents/
-│   │   └── wikipedia_docs/           # Original Word documents (398 files)
-│   ├── word_pdfs/                    # Microsoft Word-generated PDFs
-│   ├── google_docs_pdfs/             # Google Docs-generated PDFs
-│   ├── python_pdfs/                  # Python/ReportLab-generated PDFs
-│   ├── libreoffice_pdfs/             # LibreOffice-generated PDFs
-│   ├── html_pdfs/                    # Browser-generated PDFs
-│   └── converted_pngs/               # Binary image representations
-│       ├── word_pdfs_png/
-│       ├── google_docs_pdfs_png/
-│       ├── python_pdfs_png/
-│       ├── libreoffice_pdfs_png/
-│       └── html_pdfs_png/
-│
-├── src/                              # Source code
-│   ├── pdf_conversions/              # PDF generation scripts
-│   │   ├── convert_word_pdfs.py      # Microsoft Word conversion
-│   │   ├── convert_google_docs_pdfs.py # Google Docs conversion
-│   │   ├── convert_python_pdfs.py    # Python/ReportLab conversion
-│   │   ├── convert_libreoffice_pdfs.py # LibreOffice conversion
-│   │   └── convert_html_pdfs.py     # Browser conversion
-│   ├── classifications/              # Machine learning models
-│   │   ├── train_baseline_classifiers.py # 2-class baseline
-│   │   ├── train_3class_classifiers.py   # 3-class classification
-│   │   └── train_5class_classifiers.py   # 5-class classification
-│   ├── analysis/                      # Analysis and visualization
-│   │   └── create_comparison_images.py
-│   └── image_conversion.py           # PDF to binary image converter
-│
-├── results/                          # Model outputs and results
-│   ├── performance_metrics.csv       # Model performance comparison
-│   ├── confusion_matrices/           # Confusion matrices for each model
-│   ├── comparison_images/            # Visual comparisons
-│   ├── *.pkl                        # Trained model files
-│   ├── *.h5                         # CNN model files
-│   └── scaler_*.pkl                 # Feature scalers
-│
-├── sample_images/                    # Sample test images
-├── credentials_oauth.json            # Google API credentials
-├── google_credentials.json           # Google service account
-├── token.pkl                        # OAuth token cache
-└── myenv/                           # Python virtual environment
-```
-
 ## Dataset Description
 
 ### Source Documents
